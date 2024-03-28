@@ -2,7 +2,7 @@
   "name": "fy-cli",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "fy": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,6 +24,7 @@
     "globby": "^14.0.1",
     "husky": "^9.0.11",
     "javascript-stringify": "^2.1.0",
+    "kolorist": "^1.8.0",
     "lint-staged": "^15.2.2",
     "npm-run-all2": "^6.1.2",
     "prettier": "^3.2.5",
