@@ -1,17 +1,15 @@
 export default function getData({ oldData }) {
-  const elementPlusPlugin = {
-    name: 'antdVue',
+  const antdPlugin = {
+    name: 'antd',
     importers: [
-      "import antdVue from 'ant-design-vue'",
-      "import 'ant-design-vue/dist/reset.css'",
-      "import * as antDIconsVue from '@ant-design/icons-vue'"
+      "import 'antd/dist/antd.css';",
+      "import 'ant-design/dist/reset.css'",
     ],
-    initializer: 'antdVue'
   }
 
   return {
     ...oldData,
     // Append the antdVue plugin right after the vue plugin
-    plugins: [...oldData.plugins, antdVuePlugin]
+    plugins: [...oldData.plugins, antdPlugin]
   }
 }
