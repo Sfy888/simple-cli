@@ -16,6 +16,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { parseArgs } from 'node:util'
 import { fileURLToPath } from 'node:url'
+import renderTemplate from '../utils/renderTemplate.js'
+import generateReadme from '../utils/generateReadme.js'
+
 
 import ejs from 'ejs'
 
@@ -141,7 +144,7 @@ async function init() {
   let targetDir = args[0]
 
 
-  const defaultProjectName = !targetDir ? 'vue-project' : targetDir
+  const defaultProjectName = !targetDir ? 'my-project' : targetDir
 
   const options = {
     typescript: { type: 'boolean' },
@@ -225,20 +228,19 @@ async function init() {
             }
           }),
       },
-      {
-        type: (prev, answers) => prev && prev.stateManagement ? 'select' : null,
-        name: 'stateManagement',
-        message: reset('Select a state management library:'),
-        choices: (prev, answers) => {
-          console.log(prev, '快点解封两室的记录开发')
-        }
-      },
+      // {
+      //   type: (prev, answers) => prev && prev.stateManagement ? 'select' : null,
+      //   name: 'stateManagement',
+      //   message: reset('Select a state management library:'),
+      //   choices: (prev, answers) => {
+      //   }
+      // },
       {
         name: 'stateManagementLibarary',
         hint: '- Use arrow-keys. Return to submit.',
         type: 'select',
         message: 'Choose a state management repository to apply in your project',
-        initial: 0,
+        initial: 1,
         choices: (prev, answers) => {
           if (answers.framework.name === 'Vue3') {
             return [
@@ -303,10 +305,13 @@ async function init() {
                 title: 'Element Plus',
                 value: 'elementPlus',
               },
+              {
+                title: 'Ant Design Vue',
+                value: 'antd-vue',
+              }
             ]
           } else if (answers.framework.name === 'React18') {
             return [
-
               {
                 title: 'Ant Design',
                 value: 'antd',
@@ -314,6 +319,14 @@ async function init() {
             ]
           }
         }
+      },
+      {
+        name: 'needsI18n',
+        type: 'toggle',
+        message: 'Add internationalization?',
+        initial: false,
+        active: "Yes",
+        inactive: "No",
       },
     ])
   } catch (cancelled) {
@@ -331,7 +344,8 @@ async function init() {
     needsJsx,
     needsEslint,
     needsPrettier,
-    needsUI
+    needsUI,
+    needsI18n
   } = result
 
   const root = path.join(cwd, targetDir)
@@ -346,56 +360,100 @@ async function init() {
   const pkgInfo = pkgFromUserAgent(process.env.npm_config_user_agent)
   const pkgManager = pkgInfo ? pkgInfo.name : 'npm'
   const isYarn1 = pkgManager === 'yarn' && pkgInfo?.version.startsWith('1.')
+
+  /*
+  TODO: 
+  1、有四个base模板，vue/vue-ts react/react-ts
+  2、基于base模板 添加是否需要jsx/状态管理库/样式UI库/国际化
+  */
+  // 在调用 renderTemplate 时，如果文件以 .data.mjs 结尾，就会往 callbacks 数组中添加一个回调函数
+  const callbacks = []
+  const render = (templateName) => {
+    const templateDir = path.resolve(fileURLToPath(import.meta.url), '../../template', templateName)
+    renderTemplate(templateDir, root, callbacks)
+  }
+
+  render(`template-${variant}`)
   
-  const templateDir = path.resolve(
-    fileURLToPath(import.meta.url),
-    '../..',
-    `template-${template}`,
-  )
+  // 渲染 config文件写的所有文件
+  render('config/auto-importer')
+  render('config/auto-registry-component')
 
-  console.log(templateDir, '=================================', template)
+  switch (stateManagementLibarary) {
+    case 'vuex':
+      // 加载vuex配置
+     render('config/vuex')
+     break
+    case 'pinia':
+      // 加载pinia配置
+     render('config/pinia')
+     break
+    case 'redux':
+      // 加载redux配置
+     render('config/mobx')
+     break
+    case 'mobx':
+      // 加载mobx配置
+     render('config/mobx')
+     break
+    default:
+     break
+  }
+  if (needsJsx) {
+    render('config/jsx')
+  }
+  if (needsEslint) {
 
-  const write = (file, content) => {
-    const targetPath = path.join(root, renameFiles[file] ?? file)
-    if (content) {
-      fs.writeFileSync(targetPath, content)
+  }
+  if (needsUI) {
+    if (needsUI === 'elementPlus') {
+      render('config/element-plus')
     } else {
-      copy(path.join(templateDir, file), targetPath)
+      render('config/antd')
     }
   }
-
-  const files = fs.readdirSync(templateDir)
-  for (const file of files.filter((f) => f !== 'package.json')) {
-    write(file)
+  if (needsI18n) {
+    render('config/i18n')
   }
-
-  const pkg = JSON.parse(
-    fs.readFileSync(path.join(templateDir, `package.json`), 'utf-8'),
+  
+  
+  // 调用 callbacks 数组中的每一个回调函数
+  // 在回调函数中，会调用 getData 函数，然后将返回的数据存储到 dataStore 中
+  const dataStore = {}
+  // Process callbacks
+  for (const cb of callbacks) {
+    await cb(dataStore, result)
+  }
+  // EJS template rendering
+  // 前序遍历文件夹，对每一个文件进行处理，如果文件以 .ejs 结尾，就渲染模板
+  preOrderDirectoryTraverse(
+    root,
+    () => {},
+    (filepath) => {
+      if (filepath.endsWith('.ejs')) {
+        const template = fs.readFileSync(filepath, 'utf-8')
+        const dest = filepath.replace(/\.ejs$/, '')
+        if (dataStore[dest]) dataStore[dest].result = result
+        const content = ejs.render(template, dataStore[dest])
+        fs.writeFileSync(dest, content)
+        fs.unlinkSync(filepath)
+      }
+    }
   )
+  
 
-  pkg.name = packageName || getProjectName()
+  const userAgent = process.env.npm_config_user_agent ?? ''
+  const packageManager = /pnpm/.test(userAgent) ? 'pnpm' : /yarn/.test(userAgent) ? 'yarn' : 'npm'
 
-  write('package.json', JSON.stringify(pkg, null, 2) + '\n')
-
-  const cdProjectName = path.relative(cwd, root)
-  console.log(`\nDone. Now run:\n`)
-  if (root !== cwd) {
-    console.log(
-      `  cd ${
-        cdProjectName.includes(' ') ? `"${cdProjectName}"` : cdProjectName
-      }`,
-    )
-  }
-  switch (pkgManager) {
-    case 'yarn':
-      console.log('  yarn')
-      console.log('  yarn dev')
-      break
-    default:
-      console.log(`  ${pkgManager} install`)
-      console.log(`  ${pkgManager} run dev`)
-      break
-  }
+  // README generation
+  fs.writeFileSync(
+    path.resolve(root, 'README.md'),
+    generateReadme({
+      projectName: result.projectName ?? result.packageName ?? defaultProjectName,
+      packageManager,
+      needsEslint
+    })
+  )
 
 
 }
@@ -429,5 +487,24 @@ function copyDir(srcDir, destDir) {
     const srcFile = path.resolve(srcDir, file)
     const destFile = path.resolve(destDir, file)
     copy(srcFile, destFile)
+  }
+}
+
+// 前序遍历 dir 目录，针对目录调用 dirCallback 并把目录路径传递给它，针对文件调用 fileCallback 并把文件路径传递给它
+export function preOrderDirectoryTraverse(dir, dirCallback, fileCallback) {
+  for (const filename of fs.readdirSync(dir)) {
+    if (filename === '.git') {
+      continue
+    }
+    const fullpath = path.resolve(dir, filename)
+    if (fs.lstatSync(fullpath).isDirectory()) {
+      dirCallback(fullpath)
+      // in case the dirCallback removes the directory entirely
+      if (fs.existsSync(fullpath)) {
+        preOrderDirectoryTraverse(fullpath, dirCallback, fileCallback)
+      }
+      continue
+    }
+    fileCallback(fullpath)
   }
 }

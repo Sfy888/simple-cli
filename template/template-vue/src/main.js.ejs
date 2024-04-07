@@ -1,0 +1,15 @@
+import { createApp } from 'vue'
+import App from './App.vue'
+<%_ for (const { importers } of plugins) { _%>
+<%_ for (const importer of importers) { _%>
+<%- importer  _%><%- '\n' %>
+<%_ } _%>
+<%_ } _%>
+
+const app = createApp(App)
+
+<%_ for (const { initializer } of plugins) { _%>
+app.use(<%- initializer _%>)
+<%_ } _%>
+
+app.mount('#app')
