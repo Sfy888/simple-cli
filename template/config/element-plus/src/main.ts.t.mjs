@@ -1,7 +1,7 @@
 export default function getData({ oldData }) {
   const elementPlusPlugin = {
     name: 'elementPlus',
-    importers: ["import elementPlus from 'element-plus'", "import 'element-plus/dist/index.css'"
+    importers: ["import elementPlus from 'element-plus'","import 'element-plus/dist/index.css'"
   ],
     initializer: 'elementPlus'
   }

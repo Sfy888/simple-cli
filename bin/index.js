@@ -370,7 +370,7 @@ async function init() {
   const callbacks = []
   const render = (templateName) => {
     const templateDir = path.resolve(fileURLToPath(import.meta.url), '../../template', templateName)
-    renderTemplate(templateDir, root, callbacks)
+    renderTemplate(templateDir, root, callbacks, variant)
   }
 
   render(`template-${variant}`)

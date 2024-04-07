@@ -61,7 +61,7 @@ function sortDependencies(packageJson) {
  * @param {string} dest destination filename of the copy operation
  */
 // 作用：渲染模板文件夹/文件到文件系统
-function renderTemplate(src, dest, callbacks) {
+function renderTemplate(src, dest, callbacks, variant) {
   const stats = fs.statSync(src)
   if (stats.isDirectory()) {
     // skip node_module
@@ -72,7 +72,7 @@ function renderTemplate(src, dest, callbacks) {
     // if it's a directory, render its subdirectories and files recursively
     fs.mkdirSync(dest, { recursive: true })
     for (const file of fs.readdirSync(src)) {
-      renderTemplate(path.resolve(src, file), path.resolve(dest, file), callbacks)
+      renderTemplate(path.resolve(src, file), path.resolve(dest, file), callbacks, variant)
     }
     return
   }
@@ -110,38 +110,82 @@ function renderTemplate(src, dest, callbacks) {
     return
   }
 
+  if (variant.includes('ts')) {
+    
   // `example.tjs` will be used to render `example.js`
-  if (filename.endsWith('.m.mjs')) {
-    dest = dest.replace(/\.m\.mjs$/, '')
-    callbacks.push(async (dataStore, result) => {
-      const getData = (await import(pathToFileURL(src).toString())).default
-      // Though current `getData` are all sync, we still retain the possibility of async
-      dataStore[dest] = await getData({
-        oldData: dataStore[dest] || {},
-        result
+    if (filename.endsWith('.t.mjs')) {
+      dest = dest.replace(/\.t\.mjs$/, '')
+      callbacks.push(async (dataStore, result) => {
+        const getData = (await import(pathToFileURL(src).toString())).default
+        // Though current `getData` are all sync, we still retain the possibility of async
+        dataStore[dest] = await getData({
+          oldData: dataStore[dest] || {},
+          result
+        })
       })
-    })
+    }
+
+    // data file for EJS templates
+    // e.g. `example.data.mts` will be used to render `example.mts`
+    if (filename.endsWith('.datat.mjs')) {
+      // use dest path as key for the data store
+      dest = dest.replace(/\.datat\.mjs$/, '')
+      // Add a callback to the array for late usage when template files are being processed
+      callbacks.push(async (dataStore, result) => {
+        const getData = (await import(pathToFileURL(src).toString())).default
+        // Though current `getData` are all sync, we still retain the possibility of async
+        dataStore[dest] = await getData({
+          oldData: dataStore[dest] || {},
+          result
+        })
+      })
+
+      return // skip copying the data file
+    }
+  } else {
+    // `example.tjs` will be used to render `example.js`
+    if (filename.endsWith('.m.mjs')) {
+      dest = dest.replace(/\.m\.mjs$/, '')
+      callbacks.push(async (dataStore, result) => {
+        const getData = (await import(pathToFileURL(src).toString())).default
+
+        // Though current `getData` are all sync, we still retain the possibility of async
+        dataStore[dest] = await getData({
+          oldData: dataStore[dest] || {},
+          result
+        })
+      })
+    }
+
+    // data file for EJS templates
+    // e.g. `example.data.mjs` will be used to render `example.mjs`
+    if (filename.endsWith('.data.mjs')) {
+      // use dest path as key for the data store
+      dest = dest.replace(/\.data\.mjs$/, '')
+      // Add a callback to the array for late usage when template files are being processed
+      callbacks.push(async (dataStore, result) => {
+        const getData = (await import(pathToFileURL(src).toString())).default
+        // Though current `getData` are all sync, we still retain the possibility of async
+        dataStore[dest] = await getData({
+          oldData: dataStore[dest] || {},
+          result
+        })
+      })
+
+      return // skip copying the data file
+    }
   }
 
-  // data file for EJS templates
-  // e.g. `example.data.mjs` will be used to render `example.mjs`
-  if (filename.endsWith('.data.mjs')) {
-    // use dest path as key for the data store
-    dest = dest.replace(/\.data\.mjs$/, '')
-    // Add a callback to the array for late usage when template files are being processed
-    callbacks.push(async (dataStore, result) => {
-      const getData = (await import(pathToFileURL(src).toString())).default
-      // Though current `getData` are all sync, we still retain the possibility of async
-      dataStore[dest] = await getData({
-        oldData: dataStore[dest] || {},
-        result
-      })
-    })
-
-    return // skip copying the data file
+  if (variant.includes('ts')) {
+    if (!(src.includes('.m.mjs') || src.includes('.data.mjs'))) {
+      fs.copyFileSync(src, dest)
+    }
+  } else {
+    if (!(src.includes('.t.mjs') || src.includes('.datat.mjs'))) {
+      fs.copyFileSync(src, dest)
+    }
   }
-
-  fs.copyFileSync(src, dest)
+  
 }
 
 export default renderTemplate

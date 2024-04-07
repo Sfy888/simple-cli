@@ -27,7 +27,6 @@ export default function getData({ oldData, result }) {
       ]
     })`
   }
-  console.log(oldData, '========')
   return {
     ...oldData,
     plugins: [
