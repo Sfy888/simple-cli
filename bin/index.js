@@ -406,8 +406,11 @@ async function init() {
 
   }
   if (needsUI) {
+    console.log(needsUI, '----')
     if (needsUI === 'elementPlus') {
       render('config/element-plus')
+    } else if (needsUI === 'antd-vue') {
+      render('config/antd-vue')
     } else {
       render('config/antd')
     }
