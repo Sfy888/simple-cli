@@ -177,11 +177,19 @@ function renderTemplate(src, dest, callbacks, variant) {
   }
 
   if (variant.includes('ts')) {
-    if (!(src.includes('.m.mjs') || src.includes('.data.mjs'))) {
+    if (src.includes('ts.mjs')) {
+      dest = dest.replace(/ts\.mjs$/, 'ts')
+    }
+    if (!(src.includes('.m.mjs') || src.includes('.data.mjs') || src.includes('js.mjs'))) {
+      // src原路径，dest目标路径
       fs.copyFileSync(src, dest)
     }
   } else {
-    if (!(src.includes('.t.mjs') || src.includes('.datat.mjs'))) {
+    if (src.includes('js.mjs')) {
+      dest = dest.replace(/js\.mjs$/, 'js')
+    }
+    if (!(src.includes('.t.mjs') || src.includes('.datat.mjs') || src.includes('ts.mjs'))) {
+      
       fs.copyFileSync(src, dest)
     }
   }
