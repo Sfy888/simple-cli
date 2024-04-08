@@ -148,7 +148,6 @@ function renderTemplate(src, dest, callbacks, variant) {
       dest = dest.replace(/\.m\.mjs$/, '')
       callbacks.push(async (dataStore, result) => {
         const getData = (await import(pathToFileURL(src).toString())).default
-
         // Though current `getData` are all sync, we still retain the possibility of async
         dataStore[dest] = await getData({
           oldData: dataStore[dest] || {},
