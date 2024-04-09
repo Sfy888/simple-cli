@@ -179,6 +179,7 @@ function renderTemplate(src, dest, callbacks, variant) {
     if (src.includes('ts.mjs')) {
       dest = dest.replace(/ts\.mjs$/, 'ts')
     }
+    
     if (!(src.includes('.m.mjs') || src.includes('.data.mjs') || src.includes('js.mjs'))) {
       // src原路径，dest目标路径
       fs.copyFileSync(src, dest)

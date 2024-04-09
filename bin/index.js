@@ -376,8 +376,11 @@ async function init() {
   render(`template-${variant}`)
   
   // 渲染 config文件写的所有文件
-  render('config/auto-importer')
-  render('config/auto-registry-component')
+
+  if (variant.includes('vue')) {
+    render('config/auto-importer')
+    render('config/auto-registry-component')
+  }
 
   switch (stateManagementLibarary) {
     case 'vuex':
@@ -390,7 +393,7 @@ async function init() {
      break
     case 'redux':
       // 加载redux配置
-     render('config/mobx')
+     render('config/redux')
      break
     case 'mobx':
       // 加载mobx配置
@@ -406,7 +409,6 @@ async function init() {
 
   }
   if (needsUI) {
-    console.log(needsUI, '----')
     if (needsUI === 'elementPlus') {
       render('config/element-plus')
     } else if (needsUI === 'antd-vue') {
@@ -416,7 +418,11 @@ async function init() {
     }
   }
   if (needsI18n) {
-    render('config/i18n')
+    if (variant.includes('vue')) {
+      render('config/i18n-vue')
+    } else {
+      render('config/i18n-react')
+    }
   }
   
   
