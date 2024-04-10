@@ -4,19 +4,19 @@ A simple and fast scaffold for building front-end projects, supporting the const
 With NPM:
 
 ```bash
-$ npm install -g fy-cli
+$ npm install -g fy-simple-cli
 ```
 
 With Yarn:
 
 ```bash
-$ yarn add -D fy-cli
+$ yarn add -D fy-simple-cli
 ```
 
 With PNPM:
 
 ```bash
-$ pnpm install -g fy-cli
+$ pnpm install -g fy-simple-cli
 ```
 
 Create a project:

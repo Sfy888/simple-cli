@@ -1,8 +1,12 @@
 {
-  "name": "fy-cli",
+  "name": "fy-simple-cli",
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sfy888/simple-cli.git"
+  },
   "scripts": {
     "fy": "echo \"Error: no test specified\" && exit 1"
   },
