@@ -330,7 +330,6 @@ async function init() {
       },
     ])
   } catch (cancelled) {
-    console.log(cancelled.message)
     process.exit(1)
   }
 

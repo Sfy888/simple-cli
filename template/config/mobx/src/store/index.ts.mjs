@@ -10,7 +10,6 @@ class Normal {
 
 //更改属性的方法
   changeSinglePrice(price: number) {
-    console.log("调用了");
     this.singlePrice = price;
   }
   changeDoublePrice(price: number) {
